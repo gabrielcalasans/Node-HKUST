@@ -1,5 +1,6 @@
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
+const dboper = require('./operations');
 
 const url = 'mongodb://localhost:27017/';
 const dbname = 'conFusion';
@@ -13,26 +14,36 @@ MongoClient.connect(url, (err, client) => {
     console.log('Connected correclty to server');
     
     const db = client.db(dbname);
-    const collection = db.collection('dishes'); // acessa e atribui a collection dishes à variável collection
     
-    collection.insertOne({"name": "Uthappizza", "description": "test"}, (err, result) => {
-        assert.equal(err, null);
+    dboper.insertDocument(db, {name: "Vadonut", description: 'Test'}, 'dishes', (result) => { 
         
-        console.log('After Insert:\n');
-        console.log(result.ops); //OPS é uma propriedade q carrega quantas operações foram realizadas de maneira correta
+        console.log('Insert Document:\n', result.ops);
         
-        collection.find({}).toArray((err, docs) => { //Procura e armazena na variável docs, retorna erro em err
-            assert.equal(err, null);
+        dboper.findDocuments(db, 'dishes', (docs) => {
+            console.log('Found Documents:\n', docs);
             
-            console.log('Found:\n');
-            console.log(docs);
-            
-            db.dropCollection('dishes', (err, result) => { // 'apaga' dishes
-                assert.equal(err, null);
+            dboper.updateDocument(db, {name: 'Vadonut'}, {description: 'Update Test'}, 'dishes', (result) => { // Não é preciso especificar todos os campos na hora atualizar, apenas um que identifique os alvos (ou nenhum pra todos) 
                 
-                client.close();
+                console.log('Updated Document:\n', result.result);
+                
+                dboper.findDocuments(db, 'dishes', (docs) => {
+                    console.log('Found Documents:\n', docs);
+                    
+                    db.dropCollection('dishes', (result) => {
+                        console.log('Dropped Collection: ', result);
+                        
+                        client.close();
+                    });
+                    
+                });
+                
+               
+                
             });
+            
         });
+        
     });
+   
     
 });

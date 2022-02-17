@@ -14,14 +14,33 @@ connect.then((db) => {
     })
         .then((dish) => {
             console.log(dish);
-            return Dishes.find({});
-        })
-        .then((dishes) => {
-            console.log(dishes);
             
+            return Dishes.findByIdAndUpdate(dish._id, {
+                $set: { description: 'Updated test'}
+            }, { 
+                new: true 
+                
+            }).exec();
+        })
+        .then((dish) => {
+            console.log(dish);
+            
+            dish.comments.push({
+                rating: 5,
+                comment: 'I\'m getting a sinking feeling!',
+                author: 'Leonardo di Carpaccio'
+            });
+        
+            return dish.save(); // usado para salvar o 'insert'
+        
+        })
+        .then((dish) =>{ 
+            console.log(dish);
             return Dishes.remove({});
+        
         })
         .then(() => {
+            //console.log('closing');
             return mongoose.connection.close();
         })
         .catch((err) => {

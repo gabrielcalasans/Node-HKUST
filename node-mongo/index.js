@@ -36,8 +36,7 @@ MongoClient.connect(url).then((client) => {
             console.log('Dropped Collection: ', result);        
             client.close();
         
-        })
-    
+        })    
         .catch((err) => console.log(err));  
     
 })

@@ -16,7 +16,7 @@ const Dishes = require('./models/dishes');
 const Leader = require('./models/dishes');
 
 const url = 'mongodb://localhost:27017/conFusion';
-const connect = mongoose.connect(url);
+const connect = mongoose.connect(url, { useMongoClient: true });
 
 connect.then((db) => {
     console.log('Connected correctly to server');
@@ -31,36 +31,51 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+app.use(cookieParser('12345-67890-09876-54321'));
 
 function auth(req, res, next) {
-    console.log(req.headers);
+    console.log(req.signedCookies);
     
-    var authHeader = req.headers.authorization;
+    if(!req.signedCookies.user) {
+        var authHeader = req.headers.authorization;
     
-    if(!authHeader) {
-        var err = new Error('You are not authenticated!');
-        
-        res.setHeader('WWW-Authenticate', 'Basic');
-        err.status = 401;
-        return next(err);        
-    }
-    
-    var auth = new Buffer(authHeader.split(' ')[1], 'base64').toString().split(':');
-    
-    var username = auth[0];
-    var password = auth[1];
-    
-    if(username === 'admin' && password === 'password') {
-        next(); // Permite que o programa continue a execução
+        if(!authHeader) {  // esperamos que o usuário se identifique, caso o cookie de autenticação não esteja definido
+            var err = new Error('You are not authenticated!');
+
+            res.setHeader('WWW-Authenticate', 'Basic');
+            err.status = 401;
+            return next(err);        
+        }
+
+        var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+
+        var username = auth[0];
+        var password = auth[1];
+
+        if(username === 'admin' && password === 'password') {
+            res.cookie('user', 'admin', { signed:true }); // Configura o cookie neste ponto, para que a autenticação não seja mais necessária
+            next(); // Permite que o programa continue a execução
+        }
+        else {
+            var err = new Error('You are not authenticated!');
+
+            res.setHeader('WWW-Authenticate', 'Basic');
+            err.status = 401;
+            return next(err); // Bloqueia o usuário de seguir com o fluxo esperado
+        }
     }
     else {
-        var err = new Error('You are not authenticated!');
-        
-        res.setHeader('WWW-Authenticate', 'Basic');
-        err.status = 401;
-        return next(err); // Bloqueia o usuário de seguir com o fluxo esperado
+        if(req.signedCookies.user === 'admin') { //checa se o cookie autenticado está certo e permite a continuidade de operações, caso esteja
+            next(); 
+        }
+        else {
+            var err = new Error('You are not authenticated!');
+            
+            err.status = 401;
+            return next(err); 
+        }
     }
+    
 }
 
 app.use(auth);

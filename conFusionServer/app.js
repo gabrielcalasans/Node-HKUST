@@ -44,44 +44,24 @@ app.use(session({
     store: new FileStore()
 }));
 
+app.use('/', indexRouter); // é necessário mover os routers para que o usuário possa acessar a página antes da verificação
+app.use('/users', usersRouter); // as outras páginas ficam disponíveis somente após o usuário estar logado
+
 function auth(req, res, next) {
     console.log(req.session);
     
-    if(!req.session.user) {
-        var authHeader = req.headers.authorization;
-    
-        if(!authHeader) {  // esperamos que o usuário se identifique, caso o cookie de autenticação não esteja definido
-            var err = new Error('You are not authenticated!');
-
-            res.setHeader('WWW-Authenticate', 'Basic');
-            err.status = 401;
-            return next(err);        
-        }
-
-        var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-
-        var username = auth[0];
-        var password = auth[1];
-
-        if(username === 'admin' && password === 'password') {
-            req.session.user = 'admin';
-            next(); // Permite que o programa continue a execução
-        }
-        else {
-            var err = new Error('You are not authenticated!');
-
-            res.setHeader('WWW-Authenticate', 'Basic');
-            err.status = 401;
-            return next(err); // Bloqueia o usuário de seguir com o fluxo esperado
-        }
+    if(!req.session.user) {  // checa se não existe a sessão
+        var err = new Error('You are not authenticated!');
+        res.setHeader('WWW-Authenticate', 'Basic');
+        err.status = 401;
+        return next(err);
     }
     else {
-        if(req.session.user === 'admin') { //checa se o cookie autenticado está certo e permite a continuidade de operações, caso esteja
+        if(req.session.user === 'authenticated') { 
             next(); 
         }
         else {
-            var err = new Error('You are not authenticated!');
-            
+            var err = new Error('You are not authenticated!');            
             err.status = 401;
             return next(err); 
         }
@@ -90,11 +70,9 @@ function auth(req, res, next) {
 }
 
 app.use(auth);
-
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+
 app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);
 app.use('/leaders', leaderRouter);

@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 var authenticate = require('../authenticate');
 const multer = require('multer');
+const cors = require('./cors');
 
 var storage = multer.diskStorage({ // usado para configurar as informações do upload (locais de arquivos)
     destination: (req, file, cb) => {
@@ -28,23 +29,24 @@ const uploadRouter = express.Router();
 uploadRouter.use(bodyParser.json());
 
 uploadRouter.route('/')
-.get(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
+.get(cors.cors, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403; // Significa que a operação não é suportada
     res.end('GET operation not supported on /dishes');
     
 })
-.post(authenticate.verifyUser, authenticate.verifyAdmin, upload.single('imageFile'), (req, res) => {
+.post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, upload.single('imageFile'), (req, res) => {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.json(req.file); // contém o caminho do arquivo enviado
     
 })
-.put(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403; // Significa que a operação não é suportada
     res.end('PUT operation not supported on /dishes');
     
 })
-.delete(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403; // Significa que a operação não é suportada
     res.end('DELETE operation not supported on /dishes');
     

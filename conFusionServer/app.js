@@ -15,11 +15,13 @@ var dishRouter = require('./routes/dishRouter');
 var promoRouter = require('./routes/promoRouter');
 var leaderRouter = require('./routes/leaderRouter');
 var uploadRouter = require('./routes/uploadRouter');
+var favoriteRouter = require('./routes/favoriteRouter');
 
 const mongoose = require('mongoose');
 
 const Dishes = require('./models/dishes');
-const Leader = require('./models/dishes');
+const Leader = require('./models/leader');
+const Favourite = require('./models/favorite');
 
 const url = config.mongoUrl;
 const connect = mongoose.connect(url, { useMongoClient: true });
